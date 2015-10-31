@@ -15,3 +15,5 @@ Kindly file them in Github Issues.
 ##TODO
 - [ ] allow choosing different output formats
 - [ ] look into .doc/.docx conversion
+- [ ] include a prepackaged fat jar for those who just want to use it
+- [ ] installation instructions/documentation
