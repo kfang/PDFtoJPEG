@@ -1,16 +1,15 @@
-import java.awt.{Desktop}
+import java.awt.Desktop
 import java.awt.image.BufferedImage
 import java.io.{FileOutputStream, File}
 import java.text.DecimalFormat
-import java.util.UUID
 import javafx.application.{Platform, Application}
 import javafx.concurrent.Task
 import javafx.event.{ActionEvent, EventHandler}
+import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.Alert.AlertType
 import javafx.scene.control._
-import javafx.scene.layout.{GridPane, StackPane}
-import javafx.stage.FileChooser.ExtensionFilter
+import javafx.scene.layout.{HBox, GridPane}
 import javafx.stage.{DirectoryChooser, FileChooser, Stage}
 
 import org.apache.pdfbox.pdmodel.{PDPage, PDDocument}
@@ -22,19 +21,18 @@ class Main extends Application {
 
   override def start(primaryStage: Stage): Unit = {
     primaryStage.setTitle("PDF to PNG")
-    val root = new GridPane()
 
     var loadedDoc: Option[PDDocument] = None
     var saveDirectory: Option[File] = None
 
     //choose pdf elements
-    val button = new Button("Browse for PDF...")
+    val chooseButton = new Button("Browse for PDF...")
     val pdfTextField = new TextField("choose a pdf")
-    pdfTextField.setPrefWidth(200.0)
+    pdfTextField.setPrefWidth(300.0)
     pdfTextField.setEditable(false)
 
     //bind the choose pdf button
-    button.setOnAction(new EventHandler[ActionEvent] {
+    chooseButton.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         //initialize the file chooser
         val fc = new FileChooser()
@@ -61,7 +59,7 @@ class Main extends Application {
     //choose directory elements
     val directoryButton = new Button("Browse...")
     val directoryTextField = new TextField("choose a save directory")
-    directoryTextField.setPrefWidth(200.0)
+    directoryTextField.setPrefWidth(300.0)
     directoryTextField.setEditable(false)
 
     //bind the choose directory element
@@ -82,11 +80,11 @@ class Main extends Application {
     val convert = new Button("Convert")
     val progressLabel = new Label("0/0")
 
-    progress.setMinWidth(350)
+    progress.setPrefWidth(300)
     progress.setVisible(false)
     progressLabel.setVisible(false)
 
-
+    //bind the convert button
     convert.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         if(loadedDoc.isDefined && saveDirectory.isDefined){
@@ -139,20 +137,25 @@ class Main extends Application {
       }
     })
 
+
+    //setup the layout
+    val root = new GridPane()
     root.setHgap(3.0)
 
     root.add(pdfTextField, 0, 0)
-    root.add(button, 1, 0)
+    root.add(chooseButton, 1, 0)
 
     root.add(directoryTextField, 0, 1)
     root.add(directoryButton, 1, 1)
 
     root.add(progress, 0, 2)
-    root.add(convert, 1, 2)
-    root.add(progressLabel, 2, 2)
+    val convertBtnLabel = new HBox()  //we want to put the button and label in the same box
+    convertBtnLabel.setSpacing(3.0)
+    convertBtnLabel.setAlignment(Pos.BOTTOM_LEFT)
+    convertBtnLabel.getChildren.addAll(convert, progressLabel)
+    root.add(convertBtnLabel, 1, 2)
 
     primaryStage.setScene(new Scene(root))
-    primaryStage.setWidth(500)
     primaryStage.show()
   }
 }
