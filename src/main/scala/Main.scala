@@ -22,14 +22,32 @@ class Main extends Application {
   override def start(primaryStage: Stage): Unit = {
     primaryStage.setTitle("PDF to PNG")
 
-    var loadedDoc: Option[PDDocument] = None
+    var loadedDoc: Option[(File, PDDocument)] = None
     var saveDirectory: Option[File] = None
 
     //choose pdf elements
     val chooseButton = new Button("Browse for PDF...")
+
     val pdfTextField = new TextField("choose a pdf")
     pdfTextField.setPrefWidth(300.0)
     pdfTextField.setEditable(false)
+
+    //conversion elements
+    val progress = new ProgressBar()
+    val convert = new Button("Convert")
+    val progressLabel = new Label("0/0")
+
+    progress.setPrefWidth(300)
+    progress.setVisible(false)
+    progressLabel.setVisible(false)
+
+    //choose directory elements
+    val directoryButton = new Button("Browse...")
+    val directoryTextField = new TextField("choose a save directory")
+    directoryTextField.setPrefWidth(300.0)
+    directoryTextField.setEditable(false)
+
+
 
     //bind the choose pdf button
     chooseButton.setOnAction(new EventHandler[ActionEvent] {
@@ -42,11 +60,19 @@ class Main extends Application {
         val file = fc.showOpenDialog(primaryStage)
 
         //attempt to load the PDF
-        loadedDoc = Try(PDDocument.load(file)).toOption
+        val tryDoc = Try(PDDocument.load(file)).toOption
 
         //if the PDF is valid, set the label, otherwise give user an alert
-        if(loadedDoc.isDefined) {
+        if(tryDoc.isDefined) {
+          loadedDoc = Some((file, tryDoc.get))
           pdfTextField.setText(file.getAbsolutePath)
+
+          val parentDirectory = new File(file.getParent)
+          if(parentDirectory.isDirectory){
+            saveDirectory = Some(parentDirectory)
+            directoryTextField.setText(parentDirectory.getAbsolutePath)
+          }
+
         } else {
           val alert = new Alert(AlertType.ERROR, "Not a Valid PDF")
           alert.show()
@@ -54,13 +80,6 @@ class Main extends Application {
 
       }
     })
-
-
-    //choose directory elements
-    val directoryButton = new Button("Browse...")
-    val directoryTextField = new TextField("choose a save directory")
-    directoryTextField.setPrefWidth(300.0)
-    directoryTextField.setEditable(false)
 
     //bind the choose directory element
     directoryButton.setOnAction(new EventHandler[ActionEvent] {
@@ -73,16 +92,6 @@ class Main extends Application {
         }
       }
     })
-
-
-    //start conversion elements
-    val progress = new ProgressBar()
-    val convert = new Button("Convert")
-    val progressLabel = new Label("0/0")
-
-    progress.setPrefWidth(300)
-    progress.setVisible(false)
-    progressLabel.setVisible(false)
 
     //bind the convert button
     convert.setOnAction(new EventHandler[ActionEvent] {
@@ -97,16 +106,17 @@ class Main extends Application {
             override def call(): Unit = {
 
               val dir = saveDirectory.get.getAbsolutePath
-              val pdf = loadedDoc.get
+              val pdf = loadedDoc.get._2
               val pages = pdf.getDocumentCatalog.getAllPages.toList
               val df = new DecimalFormat("0000")
+              val prefix = loadedDoc.get._1.getName.stripSuffix(".pdf")
 
               pages.zipWithIndex.foreach({
                 case (page, index) =>
 
                   val image = page.asInstanceOf[PDPage].convertToImage(BufferedImage.TYPE_INT_RGB, 400)
                   val filename = df.format(index) + ".jpg"
-                  val file = new File(dir + "/" + filename)
+                  val file = new File(dir + "/" + prefix + "-" + filename)
                   val os = new FileOutputStream(file)
                   ImageIOUtil.writeImage(image, "jpg", os , 800)
                   os.flush()
