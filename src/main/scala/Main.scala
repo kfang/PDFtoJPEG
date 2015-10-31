@@ -20,17 +20,6 @@ import scala.util.Try
 
 class Main extends Application {
 
-//  def main (args: Array[String]){
-//    val document = PDDocument.load(getClass.getResourceAsStream("/test.pdf"))
-//    val pages = document.getDocumentCatalog.getAllPages.toList
-//    pages.zipWithIndex.foreach({
-//      case (page, index) =>
-//        val image = page.asInstanceOf[PDPage].convertToImage(BufferedImage.TYPE_INT_RGB, 400)
-//        ImageIOUtil.writeImage(image, "test-image" + index + ".png", 400)
-//    })
-//    document.close()
-//  }
-
   override def start(primaryStage: Stage): Unit = {
     primaryStage.setTitle("PDF to PNG")
     val root = new GridPane()
