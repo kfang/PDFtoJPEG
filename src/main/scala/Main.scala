@@ -27,13 +27,13 @@ class Main extends Application {
     var loadedDoc: Option[PDDocument] = None
     var saveDirectory: Option[File] = None
 
-    //choose pdf button
+    //choose pdf elements
     val button = new Button("Browse for PDF...")
-
     val pdfTextField = new TextField("choose a pdf")
     pdfTextField.setPrefWidth(200.0)
     pdfTextField.setEditable(false)
 
+    //bind the choose pdf button
     button.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         //initialize the file chooser
@@ -57,11 +57,14 @@ class Main extends Application {
       }
     })
 
+
+    //choose directory elements
     val directoryButton = new Button("Browse...")
     val directoryTextField = new TextField("choose a save directory")
     directoryTextField.setPrefWidth(200.0)
     directoryTextField.setEditable(false)
 
+    //bind the choose directory element
     directoryButton.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         val dc = new DirectoryChooser()
@@ -74,24 +77,27 @@ class Main extends Application {
     })
 
 
-
-
+    //start conversion elements
     val progress = new ProgressBar()
-    val indicator = new ProgressIndicator()
-    indicator.setVisible(false)
-    progress.setMinWidth(350)
-
     val convert = new Button("Convert")
+    val progressLabel = new Label("0/0")
+
+    progress.setMinWidth(350)
+    progress.setVisible(false)
+    progressLabel.setVisible(false)
+
 
     convert.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         if(loadedDoc.isDefined && saveDirectory.isDefined){
 
-          indicator.setVisible(true)
+          progress.setVisible(true)
+          progressLabel.setVisible(true)
 
           //task to generate the JPEGs
           val task = new Task[Unit] {
             override def call(): Unit = {
+
               val dir = saveDirectory.get.getAbsolutePath
               val pdf = loadedDoc.get
               val pages = pdf.getDocumentCatalog.getAllPages.toList
@@ -99,9 +105,6 @@ class Main extends Application {
 
               pages.zipWithIndex.foreach({
                 case (page, index) =>
-                  //update progress bar
-//                  val percent = (index.toDouble / pages.size.toDouble) * 100.0
-                  updateProgress(index, pages.size)
 
                   val image = page.asInstanceOf[PDPage].convertToImage(BufferedImage.TYPE_INT_RGB, 400)
                   val filename = df.format(index) + ".jpg"
@@ -111,10 +114,12 @@ class Main extends Application {
                   os.flush()
                   os.close()
 
+                  updateProgress(index + 1, pages.size)
+
                   Platform.runLater(new Runnable {
                     override def run(): Unit = {
+                      progressLabel.setText(s"${index + 1}/${pages.size}")
                       progress.setProgress(getProgress)
-                      indicator.setProgress(getProgress)
                     }
                   })
               })
@@ -142,9 +147,9 @@ class Main extends Application {
     root.add(directoryTextField, 0, 1)
     root.add(directoryButton, 1, 1)
 
-    root.add(convert, 1, 2)
     root.add(progress, 0, 2)
-    root.add(indicator, 2, 2)
+    root.add(convert, 1, 2)
+    root.add(progressLabel, 2, 2)
 
     primaryStage.setScene(new Scene(root))
     primaryStage.setWidth(500)
