@@ -1,7 +1,6 @@
 import java.awt.Desktop
 import java.awt.image.BufferedImage
 import java.io.{FileOutputStream, File}
-import java.lang.Thread.UncaughtExceptionHandler
 import java.text.DecimalFormat
 import javafx.application.{Platform, Application}
 import javafx.concurrent.Task
@@ -11,8 +10,6 @@ import javafx.scene.Scene
 import javafx.scene.control.Alert.AlertType
 import javafx.scene.control._
 import javafx.scene.layout._
-import javafx.scene.paint.Paint
-import javafx.scene.text.TextAlignment
 import javafx.stage.{DirectoryChooser, FileChooser, Stage}
 
 import org.apache.pdfbox.pdmodel.{PDPage, PDDocument}
