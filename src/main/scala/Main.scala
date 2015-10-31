@@ -9,7 +9,9 @@ import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.Alert.AlertType
 import javafx.scene.control._
-import javafx.scene.layout.{HBox, GridPane}
+import javafx.scene.layout._
+import javafx.scene.paint.Paint
+import javafx.scene.text.TextAlignment
 import javafx.stage.{DirectoryChooser, FileChooser, Stage}
 
 import org.apache.pdfbox.pdmodel.{PDPage, PDDocument}
@@ -26,11 +28,18 @@ class Main extends Application {
     var saveDirectory: Option[File] = None
 
     //choose pdf elements
-    val chooseButton = new Button("Browse for PDF...")
-
+    val choosePDFLabel = new Label("PDF:")
+    val chooseButton = new Button("Browse for PDF")
     val pdfTextField = new TextField("choose a pdf")
-    pdfTextField.setPrefWidth(300.0)
+    pdfTextField.setPrefWidth(300)
     pdfTextField.setEditable(false)
+
+    //choose directory elements
+    val chooseDirLabel = new Label("Save Directory:")
+    val directoryButton = new Button("Save To...")
+    val directoryTextField = new TextField("choose a save directory")
+    directoryTextField.setPrefWidth(300.0)
+    directoryTextField.setEditable(false)
 
     //conversion elements
     val progress = new ProgressBar()
@@ -40,13 +49,6 @@ class Main extends Application {
     progress.setPrefWidth(300)
     progress.setVisible(false)
     progressLabel.setVisible(false)
-
-    //choose directory elements
-    val directoryButton = new Button("Browse...")
-    val directoryTextField = new TextField("choose a save directory")
-    directoryTextField.setPrefWidth(300.0)
-    directoryTextField.setEditable(false)
-
 
 
     //bind the choose pdf button
@@ -150,12 +152,24 @@ class Main extends Application {
 
     //setup the layout
     val root = new GridPane()
+
+    val col1Restraints = new ColumnConstraints()
+    root.getColumnConstraints.addAll(col1Restraints)
+
     root.setHgap(3.0)
 
-    root.add(pdfTextField, 0, 0)
+    val choosePDFLabelTextField = new HBox()
+    choosePDFLabelTextField.getChildren.addAll(choosePDFLabel, pdfTextField)
+    choosePDFLabelTextField.setSpacing(3.0)
+    choosePDFLabelTextField.setAlignment(Pos.CENTER_RIGHT)
+    root.add(choosePDFLabelTextField, 0, 0)
     root.add(chooseButton, 1, 0)
 
-    root.add(directoryTextField, 0, 1)
+    val chooseDirLabelTextField = new HBox()
+    chooseDirLabelTextField.setSpacing(3.0)
+    chooseDirLabelTextField.setAlignment(Pos.CENTER_RIGHT)
+    chooseDirLabelTextField.getChildren.addAll(chooseDirLabel, directoryTextField)
+    root.add(chooseDirLabelTextField, 0, 1)
     root.add(directoryButton, 1, 1)
 
     root.add(progress, 0, 2)
