@@ -1,16 +1,15 @@
-import java.awt.{Desktop}
+import java.awt.Desktop
 import java.awt.image.BufferedImage
 import java.io.{FileOutputStream, File}
 import java.text.DecimalFormat
-import java.util.UUID
 import javafx.application.{Platform, Application}
 import javafx.concurrent.Task
 import javafx.event.{ActionEvent, EventHandler}
+import javafx.geometry.Pos
 import javafx.scene.Scene
 import javafx.scene.control.Alert.AlertType
 import javafx.scene.control._
-import javafx.scene.layout.{GridPane, StackPane}
-import javafx.stage.FileChooser.ExtensionFilter
+import javafx.scene.layout.{HBox, GridPane}
 import javafx.stage.{DirectoryChooser, FileChooser, Stage}
 
 import org.apache.pdfbox.pdmodel.{PDPage, PDDocument}
@@ -22,19 +21,18 @@ class Main extends Application {
 
   override def start(primaryStage: Stage): Unit = {
     primaryStage.setTitle("PDF to PNG")
-    val root = new GridPane()
 
     var loadedDoc: Option[PDDocument] = None
     var saveDirectory: Option[File] = None
 
-    //choose pdf button
-    val button = new Button("Browse for PDF...")
-
+    //choose pdf elements
+    val chooseButton = new Button("Browse for PDF...")
     val pdfTextField = new TextField("choose a pdf")
-    pdfTextField.setPrefWidth(200.0)
+    pdfTextField.setPrefWidth(300.0)
     pdfTextField.setEditable(false)
 
-    button.setOnAction(new EventHandler[ActionEvent] {
+    //bind the choose pdf button
+    chooseButton.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         //initialize the file chooser
         val fc = new FileChooser()
@@ -57,11 +55,14 @@ class Main extends Application {
       }
     })
 
+
+    //choose directory elements
     val directoryButton = new Button("Browse...")
     val directoryTextField = new TextField("choose a save directory")
-    directoryTextField.setPrefWidth(200.0)
+    directoryTextField.setPrefWidth(300.0)
     directoryTextField.setEditable(false)
 
+    //bind the choose directory element
     directoryButton.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         val dc = new DirectoryChooser()
@@ -74,24 +75,27 @@ class Main extends Application {
     })
 
 
-
-
+    //start conversion elements
     val progress = new ProgressBar()
-    val indicator = new ProgressIndicator()
-    indicator.setVisible(false)
-    progress.setMinWidth(350)
-
     val convert = new Button("Convert")
+    val progressLabel = new Label("0/0")
 
+    progress.setPrefWidth(300)
+    progress.setVisible(false)
+    progressLabel.setVisible(false)
+
+    //bind the convert button
     convert.setOnAction(new EventHandler[ActionEvent] {
       override def handle(event: ActionEvent): Unit = {
         if(loadedDoc.isDefined && saveDirectory.isDefined){
 
-          indicator.setVisible(true)
+          progress.setVisible(true)
+          progressLabel.setVisible(true)
 
           //task to generate the JPEGs
           val task = new Task[Unit] {
             override def call(): Unit = {
+
               val dir = saveDirectory.get.getAbsolutePath
               val pdf = loadedDoc.get
               val pages = pdf.getDocumentCatalog.getAllPages.toList
@@ -99,9 +103,6 @@ class Main extends Application {
 
               pages.zipWithIndex.foreach({
                 case (page, index) =>
-                  //update progress bar
-//                  val percent = (index.toDouble / pages.size.toDouble) * 100.0
-                  updateProgress(index, pages.size)
 
                   val image = page.asInstanceOf[PDPage].convertToImage(BufferedImage.TYPE_INT_RGB, 400)
                   val filename = df.format(index) + ".jpg"
@@ -111,10 +112,12 @@ class Main extends Application {
                   os.flush()
                   os.close()
 
+                  updateProgress(index + 1, pages.size)
+
                   Platform.runLater(new Runnable {
                     override def run(): Unit = {
+                      progressLabel.setText(s"${index + 1}/${pages.size}")
                       progress.setProgress(getProgress)
-                      indicator.setProgress(getProgress)
                     }
                   })
               })
@@ -134,20 +137,25 @@ class Main extends Application {
       }
     })
 
+
+    //setup the layout
+    val root = new GridPane()
     root.setHgap(3.0)
 
     root.add(pdfTextField, 0, 0)
-    root.add(button, 1, 0)
+    root.add(chooseButton, 1, 0)
 
     root.add(directoryTextField, 0, 1)
     root.add(directoryButton, 1, 1)
 
-    root.add(convert, 1, 2)
     root.add(progress, 0, 2)
-    root.add(indicator, 2, 2)
+    val convertBtnLabel = new HBox()  //we want to put the button and label in the same box
+    convertBtnLabel.setSpacing(3.0)
+    convertBtnLabel.setAlignment(Pos.BOTTOM_LEFT)
+    convertBtnLabel.getChildren.addAll(convert, progressLabel)
+    root.add(convertBtnLabel, 1, 2)
 
     primaryStage.setScene(new Scene(root))
-    primaryStage.setWidth(500)
     primaryStage.show()
   }
 }
