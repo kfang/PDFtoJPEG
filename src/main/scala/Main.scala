@@ -1,11 +1,12 @@
 import java.awt.Desktop
 import java.awt.image.BufferedImage
 import java.io.{FileOutputStream, File}
+import java.lang.Thread.UncaughtExceptionHandler
 import java.text.DecimalFormat
 import javafx.application.{Platform, Application}
 import javafx.concurrent.Task
 import javafx.event.{ActionEvent, EventHandler}
-import javafx.geometry.Pos
+import javafx.geometry.{Insets, Pos}
 import javafx.scene.Scene
 import javafx.scene.control.Alert.AlertType
 import javafx.scene.control._
@@ -36,7 +37,7 @@ class Main extends Application {
 
     //choose directory elements
     val chooseDirLabel = new Label("Save Directory:")
-    val directoryButton = new Button("Save To...")
+    val directoryButton = new Button("Save To")
     val directoryTextField = new TextField("choose a save directory")
     directoryTextField.setPrefWidth(300.0)
     directoryTextField.setEditable(false)
@@ -45,10 +46,14 @@ class Main extends Application {
     val progress = new ProgressBar()
     val convert = new Button("Convert")
     val progressLabel = new Label("0/0")
-
-    progress.setPrefWidth(300)
+    progress.setPrefWidth(400)
     progress.setVisible(false)
     progressLabel.setVisible(false)
+
+    //output information label
+    val outputLabel = new Label("")
+    outputLabel.setVisible(false)
+    outputLabel.setPadding(new Insets(0, 0, 0, 3))
 
 
     //bind the choose pdf button
@@ -100,8 +105,11 @@ class Main extends Application {
       override def handle(event: ActionEvent): Unit = {
         if(loadedDoc.isDefined && saveDirectory.isDefined){
 
+          outputLabel.setVisible(false)
           progress.setVisible(true)
           progressLabel.setVisible(true)
+          progress.setProgress(0)
+          progressLabel.setText("0/0")
 
           //task to generate the JPEGs
           val task = new Task[Unit] {
@@ -134,8 +142,14 @@ class Main extends Application {
                   })
               })
 
+              Platform.runLater(new Runnable {
+                override def run(): Unit = {
+                  outputLabel.setText(s"${pages.size} files were written to ${saveDirectory.get.getAbsolutePath}")
+                  outputLabel.setVisible(true)
+                }
+              })
+
               Desktop.getDesktop.open(saveDirectory.get)
-              pdf.close()
             }
           }
 
@@ -144,7 +158,8 @@ class Main extends Application {
           thread.start()
 
         } else {
-          //need to alert the user
+          val alert = new Alert(AlertType.ERROR, "You must specify a PDF and Directory")
+          alert.show()
         }
       }
     })
@@ -152,10 +167,6 @@ class Main extends Application {
 
     //setup the layout
     val root = new GridPane()
-
-    val col1Restraints = new ColumnConstraints()
-    root.getColumnConstraints.addAll(col1Restraints)
-
     root.setHgap(3.0)
 
     val choosePDFLabelTextField = new HBox()
@@ -178,6 +189,8 @@ class Main extends Application {
     convertBtnLabel.setAlignment(Pos.BOTTOM_LEFT)
     convertBtnLabel.getChildren.addAll(convert, progressLabel)
     root.add(convertBtnLabel, 1, 2)
+
+    root.add(outputLabel, 0, 3, 2, 2)
 
     primaryStage.setScene(new Scene(root))
     primaryStage.show()
